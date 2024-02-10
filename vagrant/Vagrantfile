@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    # Definicja maszyny wirtualnej dla aplikacji
+    config.vm.define "app" do |app|
+      app.vm.box = "ubuntu/bionic64"
+      app.vm.network "private_network", ip: "192.168.56.10"
+      app.vm.provider "virtualbox" do |vb|
+        vb.memory = "1024"
+        vb.cpus = 1
+      end
+  
+      # Automatyczne przekazywanie katalogu projektu do maszyny wirtualnej
+      app.vm.synced_folder ".", "/vagrant", type: "virtualbox"
+  
+      # Skrypt provisioningu instalujący Docker
+      app.vm.provision "shell", inline: <<-SHELL
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce
+        sudo usermod -aG docker vagrant
+      SHELL
+  
+      # Skrypt provisioningu budujący i uruchamiający obraz Docker
+      app.vm.provision "shell", privileged: false, inline: <<-SHELL
+        cd /vagrant/docker
+        docker build -t myapp .
+        docker run -d -p 80:80 myapp
+      SHELL
+    end
+  end
+  

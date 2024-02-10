@@ -1,0 +1,5 @@
+# Używamy oficjalnego obrazu Grafany
+FROM grafana/grafana:7.5.4
+
+# Port, na którym Grafana będzie dostępna
+EXPOSE 3000
